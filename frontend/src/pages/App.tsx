@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, User, Loader2, Sparkles, Clipboard, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -116,24 +119,53 @@ const App: React.FC = () => {
               ) : (
                 <>
                   {messages.map((msg, index) => (
-                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center  shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
+                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full mb-2`}>
+                      <div className={`flex items-start gap-2 w-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
                           {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                         </div>
                         <div className="flex flex-col">
-                          <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground -none' : 'bg-muted/50 -none'}`}>
-                            {msg.image && (
-                              <div className="mb-3">
-                                <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md " />
+                          <div
+                            className="overflow-x-auto"
+                            style={{ WebkitOverflowScrolling: 'touch' }}
+                          >
+                            <Card
+                              className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-[120px] max-w-[85vw] md:min-w-[220px] md:max-w-[70vw] lg:min-w-[320px] lg:max-w-[60vw]`}
+                              style={{ width: 'auto', maxWidth: '100%' }}
+                            >
+                              {msg.image && (
+                                <div className="mb-3">
+                                  <img src={msg.image} alt="Uploaded content" className="max-w-50 rounded-md " />
+                                </div>
+                              )}
+                              <div className="prose dark:prose-invert prose-sm leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                                <ReactMarkdown
+                                  rehypePlugins={[rehypeHighlight]}
+                                  components={{
+                                    code({node, inline, className, children, ...props}) {
+                                      const match = /language-(\w+)/.exec(className || "");
+                                      return !inline && match ? (
+                                        <SyntaxHighlighter
+                                          style={oneDark}
+                                          language={match[1]}
+                                          PreTag="div"
+                                          {...props}
+                                        >
+                                          {String(children).replace(/\n$/, "")}
+                                        </SyntaxHighlighter>
+                                      ) : (
+                                        <code className={className} {...props}>
+                                          {children}
+                                        </code>
+                                      );
+                                    }
+                                  }}
+                                >
+                                  {msg.content}
+                                </ReactMarkdown>
                               </div>
-                            )}
-                            <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
-                              <ReactMarkdown>
-                                {msg.content}
-                              </ReactMarkdown>
-                            </div>
-                          </Card>
+                            </Card>
+                          </div>
                           {/* Tombol copy dan ulangi di bawah bubble AI */}
                           {msg.role === 'ai' && (
                             <div className="flex gap-2 mt-2 justify-end">
