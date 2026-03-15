@@ -125,10 +125,7 @@ const App: React.FC = () => {
                           {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                         </div>
                         <div className="flex flex-col">
-                          <div
-                            className="overflow-x-auto"
-                            style={{ WebkitOverflowScrolling: 'touch' }}
-                          >
+                          <div>
                             <Card
                               className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-30 max-w-[85vw] md:min-w-55 md:max-w-[70vw] lg:min-w-[320px] lg:max-w-[60vw]`}
                               style={{ width: 'auto', maxWidth: '100%' }}
@@ -138,25 +135,28 @@ const App: React.FC = () => {
                                   <img src={msg.image} alt="Uploaded content" className="max-w-50 rounded-md " />
                                 </div>
                               )}
-                              <div className="prose dark:prose-invert prose-sm leading-relaxed wrap-break-word" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                              <div className="prose dark:prose-invert prose-sm leading-relaxed wrap-break-word max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                 <ReactMarkdown
-                                  rehypePlugins={[rehypeHighlight]}
                                   components={{
                                     code({node, className, children, ...props}) {
                                       const match = /language-(\w+)/.exec(className || "");
-                                      // Deteksi inline: jika tidak ada className atau children bukan string multiline
                                       const isBlock = !!match;
                                       return isBlock ? (
-                                        <SyntaxHighlighter
-                                          style={oneDark}
-                                          language={match[1]}
-                                          PreTag="div"
-                                          {...props}
-                                        >
-                                          {String(children).replace(/\n$/, "")}
-                                        </SyntaxHighlighter>
+                                        <div className="overflow-x-auto w-full my-4 rounded-md bg-[#282c34] text-[13px] leading-snug">
+                                          <div className="min-w-max p-4">
+                                            <SyntaxHighlighter
+                                              style={oneDark}
+                                              language={match[1]}
+                                              PreTag="div"
+                                              customStyle={{ margin: 0, padding: 0, background: 'transparent' }}
+                                              {...props}
+                                            >
+                                              {String(children).replace(/\n$/, "")}
+                                            </SyntaxHighlighter>
+                                          </div>
+                                        </div>
                                       ) : (
-                                        <code className={className} {...props}>
+                                        <code className={`${className} bg-muted px-1.5 py-0.5 rounded-md text-sm`} {...props}>
                                           {children}
                                         </code>
                                       );
