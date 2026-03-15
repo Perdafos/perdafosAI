@@ -4,8 +4,10 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { PromptInputBox } from '@/components/PromptInputBox';
 import { ModeToggle } from '@/components/mode-toggle';
+import { useTheme } from '@/components/theme-provider';
 
 interface Message {
   role: 'user' | 'ai';
@@ -17,12 +19,14 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+
+  const gridColor = theme === 'dark' ? 'rgb(107, 114, 128)' : 'rgb(209, 213, 219)';
 
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        // Jika user sedang scroll ke atas, jangan auto-scroll
         const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
         if (isNearBottom) {
           scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
@@ -73,84 +77,103 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col h-screen bg-background text-foreground w-full max-w-3xl mx-auto">
-        <header className="p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center gap-2 font-semibold">
-            <div className="bg-primary p-1.5 rounded-lg">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span>Ai Chat</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ModeToggle />
-            <Button variant="outline" size="sm" onClick={() => setMessages([])}>New Chat</Button>
-          </div>
-        </header>
+      <div className="fixed inset-0 z-0 bg-background">
+        <FlickeringGrid
+          className="absolute inset-0"
+          squareSize={4}
+          gridGap={6}
+          color={gridColor}
+          maxOpacity={theme === 'dark' ? 0.3 : 0.2}
+          flickerChance={0.1}
+        />
+      </div>
 
-        <ScrollArea ref={scrollRef} className="flex-1 p-4">
-          <div className="space-y-6 pb-4">
-            {messages.length === 0 && (
-              <div className="text-center py-20">
-                <h2 className="text-2xl font-bold tracking-tight">What Can I Help You With?</h2>
-                <p className="text-muted-foreground mt-2">Type something to start a conversation.</p>
+      <div className="relative z-10 flex flex-col h-screen text-foreground w-full max-w-3xl mx-auto">
+        <div className="flex flex-col h-full">
+          <header className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 font-semibold">
+              <div className="bg-primary p-1.5 rounded-lg">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-            )}
+              <span>Ai Chat</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ModeToggle />
+              <Button variant="outline" size="sm" onClick={() => setMessages([])}>New Chat</Button>
+            </div>
+          </header>
 
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center  shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
-                    {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
+          <ScrollArea ref={scrollRef} className="flex-1 p-4">
+            <div className="space-y-6 pb-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[60vh]">
+                  <h2 className="text-2xl font-bold tracking-tight text-center">What Can I Help You With?</h2>
+                  <p className="text-muted-foreground mt-2 text-center">Type something to start a conversation.</p>
+                  <div className="mt-8 w-full max-w-md">
+                    <PromptInputBox onSend={handlePromptSend} isLoading={isLoading} placeholder="Ask Something..." />
                   </div>
-                  <div className="flex flex-col">
-                    <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground -none' : 'bg-muted/50 -none'}`}>
-                      {msg.image && (
-                        <div className="mb-3">
-                          <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md " />
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, index) => (
+                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center  shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
+                          {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                         </div>
-                      )}
-                      <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
-                        <ReactMarkdown>
-                          {msg.content}
-                        </ReactMarkdown>
+                        <div className="flex flex-col">
+                          <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground -none' : 'bg-muted/50 -none'}`}>
+                            {msg.image && (
+                              <div className="mb-3">
+                                <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md " />
+                              </div>
+                            )}
+                            <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
+                              <ReactMarkdown>
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                          </Card>
+                          {/* Tombol copy dan ulangi di bawah bubble AI */}
+                          {msg.role === 'ai' && (
+                            <div className="flex gap-2 mt-2 justify-end">
+                              <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(msg.content)} title="Copy this AI response">
+                                <Clipboard className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handlePromptSend(messages.find(m => m.role === 'user' && messages.indexOf(m) < index)?.content || '')} title="Repeat last user prompt">
+                                <RotateCcw className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </Card>
-                    {/* Tombol copy dan ulangi di bawah bubble AI */}
-                    {msg.role === 'ai' && (
-                      <div className="flex gap-2 mt-2 justify-end">
-                        <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(msg.content)} title="Copy this AI response">
-                          <Clipboard className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handlePromptSend(messages.find(m => m.role === 'user' && messages.indexOf(m) < index)?.content || '')} title="Repeat last user prompt">
-                          <RotateCcw className="w-4 h-4" />
-                        </Button>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                        <Loader2 size={14} className="animate-spin text-primary-foreground" />
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="flex justify-start gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <Loader2 size={14} className="animate-spin text-primary-foreground" />
-                </div>
-                <Card className="p-4 bg-muted/50 -none">
-                  <span className="text-sm animate-pulse text-muted-foreground">Thinking...</span>
-                </Card>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-
-        <footer className="p-4 -t bg-background">
-          <div className="flex flex-col gap-2">
-            <div className="mx-auto w-full max-w-6xl px-4">
-              <PromptInputBox onSend={handlePromptSend} isLoading={isLoading} placeholder="Ask Something..." />
+                      <Card className="p-4 bg-muted/50 -none">
+                        <span className="text-sm animate-pulse text-muted-foreground">Thinking...</span>
+                      </Card>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        </footer>
+          </ScrollArea>
+
+          {messages.length > 0 && (
+            <footer className="p-4 -t">
+              <div className="flex flex-col gap-2">
+                <div className="mx-auto w-full max-w-6xl px-4">
+                  <PromptInputBox onSend={handlePromptSend} isLoading={isLoading} placeholder="Ask Something..." />
+                </div>
+              </div>
+            </footer>
+          )}
+        </div>
       </div>
     </>
   );

@@ -83,7 +83,7 @@
 }
 
 .dark {
-    --background: oklch(0.203 0.015 264.4); /* #1F2023 approx */
+    --background: #0A0A0A; /* dark theme background */
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.203 0.015 264.4); /* same as background */
     --card-foreground: oklch(0.985 0 0);
