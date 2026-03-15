@@ -130,7 +130,7 @@ const App: React.FC = () => {
                             style={{ WebkitOverflowScrolling: 'touch' }}
                           >
                             <Card
-                              className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-[120px] max-w-[85vw] md:min-w-[220px] md:max-w-[70vw] lg:min-w-[320px] lg:max-w-[60vw]`}
+                              className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-30 max-w-[85vw] md:min-w-55 md:max-w-[70vw] lg:min-w-[320px] lg:max-w-[60vw]`}
                               style={{ width: 'auto', maxWidth: '100%' }}
                             >
                               {msg.image && (
@@ -138,13 +138,15 @@ const App: React.FC = () => {
                                   <img src={msg.image} alt="Uploaded content" className="max-w-50 rounded-md " />
                                 </div>
                               )}
-                              <div className="prose dark:prose-invert prose-sm leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                              <div className="prose dark:prose-invert prose-sm leading-relaxed wrap-break-word" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                 <ReactMarkdown
                                   rehypePlugins={[rehypeHighlight]}
                                   components={{
-                                    code({node, inline, className, children, ...props}) {
+                                    code({node, className, children, ...props}) {
                                       const match = /language-(\w+)/.exec(className || "");
-                                      return !inline && match ? (
+                                      // Deteksi inline: jika tidak ada className atau children bukan string multiline
+                                      const isBlock = !!match;
+                                      return isBlock ? (
                                         <SyntaxHighlighter
                                           style={oneDark}
                                           language={match[1]}
