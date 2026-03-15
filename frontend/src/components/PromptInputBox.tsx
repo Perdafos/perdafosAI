@@ -7,7 +7,6 @@ import {
   BrainCog,
   FolderCode,
   Globe,
-  Mic,
   Paperclip,
   Square,
   StopCircle,
@@ -755,27 +754,21 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           </div>
 
           <PromptInputAction
-            tooltip={isLoading ? "Stop generation" : isRecording ? "Stop recording" : hasContent ? "Send message" : "Voice message"}
+            tooltip={isLoading ? "Stop generation" : hasContent ? "Send message" : "Kirim"}
           >
             <Button
               variant="default"
               size="icon"
-              className={cn("h-8 w-8 rounded-full transition-all duration-200", isRecording ? "bg-transparent text-red-500 hover:bg-muted/50 hover:text-red-400" : hasContent ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
+              className={cn("h-8 w-8 rounded-full transition-all duration-200", hasContent ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
               onClick={() => {
-                if (isRecording) setIsRecording(false);
-                else if (hasContent) handleSubmit();
-                else setIsRecording(true);
+                if (hasContent) handleSubmit();
               }}
               disabled={isLoading && !hasContent}
             >
               {isLoading ? (
                 <Square className="h-4 w-4 animate-pulse fill-primary-foreground" />
-              ) : isRecording ? (
-                <StopCircle className="h-5 w-5 text-red-500" />
-              ) : hasContent ? (
-                <ArrowUp className="h-4 w-4 text-primary-foreground" />
               ) : (
-                <Mic className="h-5 w-5 text-muted-foreground transition-colors" />
+                <ArrowUp className="h-4 w-4 text-primary-foreground" />
               )}
             </Button>
           </PromptInputAction>

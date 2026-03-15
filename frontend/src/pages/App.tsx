@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Bot, User, Loader2, Sparkles, Clipboard, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +22,11 @@ const App: React.FC = () => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+        // Jika user sedang scroll ke atas, jangan auto-scroll
+        const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
+        if (isNearBottom) {
+          scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+        }
       }
     }
   }, [messages, isLoading]);
@@ -67,6 +71,27 @@ const App: React.FC = () => {
     }
   };
 
+  // Copy all AI responses
+  const handleCopyAll = () => {
+    const allAIText = messages
+      .filter((msg) => msg.role === 'ai')
+      .map((msg) => msg.content)
+      .join('\n\n');
+    if (allAIText) {
+      navigator.clipboard.writeText(allAIText);
+    }
+  };
+
+  // Repeat last user prompt
+  const handleRepeat = () => {
+    const lastUser = messages
+      .filter((msg) => msg.role === 'user')
+      .slice(-1)[0];
+    if (lastUser) {
+      handlePromptSend(lastUser.content);
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col h-screen bg-background text-foreground w-full max-w-3xl mx-auto">
@@ -98,18 +123,31 @@ const App: React.FC = () => {
                   <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center  shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
                     {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                   </div>
-                  <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground -none' : 'bg-muted/50 -none'}`}>
-                    {msg.image && (
-                      <div className="mb-3">
-                        <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md " />
+                  <div className="flex flex-col">
+                    <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground -none' : 'bg-muted/50 -none'}`}>
+                      {msg.image && (
+                        <div className="mb-3">
+                          <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md " />
+                        </div>
+                      )}
+                      <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
+                        <ReactMarkdown>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    </Card>
+                    {/* Tombol copy dan ulangi di bawah bubble AI */}
+                    {msg.role === 'ai' && (
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(msg.content)} title="Copy this AI response">
+                          <Clipboard className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handlePromptSend(messages.find(m => m.role === 'user' && messages.indexOf(m) < index)?.content || '')} title="Repeat last user prompt">
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
                       </div>
                     )}
-                    <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
-                      <ReactMarkdown>
-                        {msg.content}
-                      </ReactMarkdown>
-                    </div>
-                  </Card>
+                  </div>
                 </div>
               </div>
             ))}
