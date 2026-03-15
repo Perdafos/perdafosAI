@@ -95,7 +95,7 @@ const App: React.FC = () => {
           <header className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold">
               <div className="bg-primary p-1.5 rounded-lg">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
+                <Bot className="h-5 w-5 text-primary-foreground" />
               </div>
               <span>Ai Chat</span>
             </div>
