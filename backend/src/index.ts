@@ -8,7 +8,31 @@ const app = new Hono()
 
 app.use('/api/*', cors())
 
+// Simple RPD limiter
+const RPD_LIMIT = 20; // contoh limit harian
+let rpdCount = 0;
+let lastReset = new Date();
+
+function resetRPDIfNeeded() {
+  const now = new Date();
+  // Reset setiap jam 00:00 UTC
+  if (
+    now.getUTCDate() !== lastReset.getUTCDate() ||
+    now.getUTCMonth() !== lastReset.getUTCMonth() ||
+    now.getUTCFullYear() !== lastReset.getUTCFullYear()
+  ) {
+    rpdCount = 0;
+    lastReset = now;
+  }
+}
+
 app.post('/api/chat', async (c) => {
+  resetRPDIfNeeded();
+  if (rpdCount >= RPD_LIMIT) {
+    return c.json({ error: 'Limit harian tercapai, silakan coba besok.' }, 429);
+  }
+  rpdCount++;
+
   console.log("--- Permintaan Masuk ---")
   try {
     const { message } = await c.req.json()
