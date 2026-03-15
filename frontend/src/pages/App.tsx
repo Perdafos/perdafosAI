@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, ImagePlus, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface Message {
   role: 'user' | 'ai';
   content: string;
+  image?: string | null;
 }
 
 const App: React.FC = () => {
   const [input, setInput] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -26,20 +29,34 @@ const App: React.FC = () => {
     }
   }, [messages, isLoading]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setSelectedImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
 
-    const userMessage: Message = { role: 'user', content: input };
+  const handleSend = async () => {
+    if (!input.trim() && !selectedImage) return;
+
+    const currentInput = input;
+    const currentImage = selectedImage;
+    
+    const userMessage: Message = { role: 'user', content: currentInput, image: currentImage };
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input; // Simpan input sebelum dikosongkan
+    
     setInput('');
+    setSelectedImage(null);
     setIsLoading(true);
 
       try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: currentInput }),
+        body: JSON.stringify({ message: currentInput || 'Tolong jelaskan gambar ini', image: currentImage }),
       });
 
       if (!response.ok) throw new Error('Network response was not ok');
@@ -82,6 +99,11 @@ const App: React.FC = () => {
                   {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                 </div>
                 <Card className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground border-none' : 'bg-muted/50 border-none'}`}>
+                  {msg.image && (
+                    <div className="mb-3">
+                      <img src={msg.image} alt="Uploaded content" className="max-w-[200px] rounded-md border" />
+                    </div>
+                  )}
                   <div className="prose dark:prose-invert prose-sm leading-relaxed overflow-hidden">
                     <ReactMarkdown>
                       {msg.content}
@@ -106,17 +128,40 @@ const App: React.FC = () => {
       </ScrollArea>
 
       <footer className="p-4 border-t bg-background">
-        <div className="flex gap-2 items-center">
-          <Input
-            value={input}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleSend()}
-            placeholder="Tanyakan sesuatu..."
-            className="flex-1 h-11"
-          />
-          <Button onClick={handleSend} disabled={isLoading} size="icon" className="h-11 w-11">
-            <Send size={18} />
-          </Button>
+        <div className="flex flex-col gap-2">
+          {selectedImage && (
+            <div className="relative w-20 h-20">
+              <img src={selectedImage} alt="Selected" className="w-full h-full object-cover rounded-md border" />
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute -top-2 -right-2 bg-background border rounded-full p-0.5"
+              >
+                <X size={14} className="text-muted-foreground" />
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2 items-center">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+            />
+            <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" onClick={() => fileInputRef.current?.click()}>
+              <ImagePlus size={18} />
+            </Button>
+            <Input
+              value={input}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleSend()}
+              placeholder="Tanyakan sesuatu..."
+              className="flex-1 h-11"
+            />
+            <Button onClick={handleSend} disabled={isLoading || (!input.trim() && !selectedImage)} size="icon" className="h-11 w-11 shrink-0">
+              <Send size={18} />
+            </Button>
+          </div>
         </div>
       </footer>
     </div>
