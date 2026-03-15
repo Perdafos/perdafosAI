@@ -119,40 +119,59 @@ const App: React.FC = () => {
                 <>
                   {messages.map((msg, index) => (
                     <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full mb-2`}>
-                      <div className={`flex items-start gap-2 w-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-start gap-2 w-full max-w-full min-w-0 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                         <div className={`mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-zinc-100' : 'bg-primary'}`}>
                           {msg.role === 'user' ? <User size={14} className="text-zinc-900" /> : <Bot size={14} className="text-primary-foreground" />}
                         </div>
-                        <div className="flex flex-col">
-                          <div>
+                        <div className="flex flex-col min-w-0 max-w-[calc(100%-2.5rem)]">
+                          <div className="max-w-full flex">
                             <Card
-                              className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-30 max-w-[85vw] md:min-w-55 md:max-w-[70vw] lg:min-w-[320px] lg:max-w-[60vw]`}
-                              style={{ width: 'auto', maxWidth: '100%' }}
+                              className={`p-4 shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50'} min-w-0 max-w-full sm:max-w-[85vw] md:max-w-[70vw] lg:max-w-[60vw]`}
+                              style={{ width: 'fit-content' }}
                             >
                               {msg.image && (
                                 <div className="mb-3">
-                                  <img src={msg.image} alt="Uploaded content" className="max-w-50 rounded-md " />
+                                  <img src={msg.image} alt="Uploaded content" className="max-w-[50%] rounded-md" />
                                 </div>
                               )}
-                              <div className="prose dark:prose-invert prose-sm leading-relaxed wrap-break-word max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                              <div className="prose dark:prose-invert prose-sm leading-relaxed max-w-none break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                 <ReactMarkdown
                                   components={{
+                                    p({children}) {
+                                      return <p className="mb-4 last:mb-0 leading-relaxed">{children}</p>;
+                                    },
+                                    ul({children}) {
+                                      return <ul className="list-disc pl-5 mb-4 last:mb-0 space-y-1">{children}</ul>;
+                                    },
+                                    ol({children}) {
+                                      return <ol className="list-decimal pl-5 mb-4 last:mb-0 space-y-1">{children}</ol>;
+                                    },
+                                    li({children}) {
+                                      return <li>{children}</li>;
+                                    },
+                                    h1({children}) {
+                                      return <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0">{children}</h1>;
+                                    },
+                                    h2({children}) {
+                                      return <h2 className="text-xl font-bold mb-3 mt-5 first:mt-0">{children}</h2>;
+                                    },
+                                    h3({children}) {
+                                      return <h3 className="text-lg font-bold mb-2 mt-4 first:mt-0">{children}</h3>;
+                                    },
                                     code({node, className, children, ...props}) {
                                       const match = /language-(\w+)/.exec(className || "");
                                       const isBlock = !!match;
                                       return isBlock ? (
-                                        <div className="overflow-x-auto w-full my-4 rounded-md bg-[#282c34] text-[13px] leading-snug">
-                                          <div className="min-w-max p-4">
-                                            <SyntaxHighlighter
-                                              style={oneDark}
-                                              language={match[1]}
-                                              PreTag="div"
-                                              customStyle={{ margin: 0, padding: 0, background: 'transparent' }}
-                                              {...props}
-                                            >
-                                              {String(children).replace(/\n$/, "")}
-                                            </SyntaxHighlighter>
-                                          </div>
+                                        <div className="my-4 w-full max-w-full rounded-md text-[13px] leading-snug">
+                                          <SyntaxHighlighter
+                                            style={oneDark}
+                                            language={match[1]}
+                                            PreTag="div"
+                                            customStyle={{ margin: 0, padding: '1.25rem', overflowX: 'auto', background: '#282c34', borderRadius: '0.375rem', maxWidth: '100%' }}
+                                            {...props}
+                                          >
+                                            {String(children).replace(/\n$/, "")}
+                                          </SyntaxHighlighter>
                                         </div>
                                       ) : (
                                         <code className={`${className} bg-muted px-1.5 py-0.5 rounded-md text-sm`} {...props}>
