@@ -71,27 +71,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Copy all AI responses
-  const handleCopyAll = () => {
-    const allAIText = messages
-      .filter((msg) => msg.role === 'ai')
-      .map((msg) => msg.content)
-      .join('\n\n');
-    if (allAIText) {
-      navigator.clipboard.writeText(allAIText);
-    }
-  };
-
-  // Repeat last user prompt
-  const handleRepeat = () => {
-    const lastUser = messages
-      .filter((msg) => msg.role === 'user')
-      .slice(-1)[0];
-    if (lastUser) {
-      handlePromptSend(lastUser.content);
-    }
-  };
-
   return (
     <>
       <div className="flex flex-col h-screen bg-background text-foreground w-full max-w-3xl mx-auto">

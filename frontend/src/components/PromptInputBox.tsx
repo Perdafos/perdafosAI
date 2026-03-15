@@ -9,7 +9,6 @@ import {
   Globe,
   Paperclip,
   Square,
-  StopCircle,
   X,
 } from "lucide-react";
 
